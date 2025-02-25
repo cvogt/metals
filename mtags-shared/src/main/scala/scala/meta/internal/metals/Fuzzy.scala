@@ -66,7 +66,47 @@ class Fuzzy {
       query: CharSequence,
       symbol: CharSequence,
       skipNames: Int = 0
-  ): Boolean = genericMatches(query, symbol, skipNames, matchesName)
+  ): Boolean =
+    caseInsensitivePrefixMatch(query, symbol) || genericMatches(
+      query,
+      symbol,
+      skipNames,
+      matchesName
+    )
+
+  private def caseInsensitivePrefixMatch(
+      query: CharSequence,
+      symbol: CharSequence
+  ) = {
+    // only match queries that don't have delimiers, e.g. when completing a name in a scope
+    if (lastDelimiter(query, query.length).idx > 0) false
+    else {
+      val sl = lastDelimiter(symbol, symbol.length).idx
+      // query is longer than last segment of the symbol so can't match
+      if (sl + 1 + query.length >= symbol.length) false
+      else {
+        @tailrec
+        def loop(i: Int): Boolean =
+          // if every character of query matched, we have a match
+          if (i >= query.length) true
+          // only match lower case queries in a case-insensitive way
+          else if (query.charAt(i).isUpper) false
+          // if query matches char at index matches lower case symbol char at index, advance loop
+          else if (query.charAt(i) == symbol.charAt(sl + i + i).toLower)
+            loop(i + 1)
+          // we had a mismatch
+          else false
+        loop(0)
+      }
+    }
+
+    (query.toString == query.toString.toLowerCase) && symbol.toString
+      .split("\\.")
+      .last
+      .toLowerCase
+      .startsWith(query.toString)
+
+  }
 
   private def genericMatches(
       query: CharSequence,

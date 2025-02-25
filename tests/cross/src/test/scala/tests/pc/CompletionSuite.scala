@@ -1577,11 +1577,13 @@ class CompletionSuite extends BaseCompletionSuite {
         |  scala@@
         |}
         |""".stripMargin,
-    """|scala `<root>`
+    """|ScalaReflectionException scala
+       |scala `<root>`
        |""".stripMargin,
     compat = Map(
       "2" ->
-        """|scala _root_
+        """|ScalaReflectionException scala
+           |scala _root_
            |""".stripMargin
     )
   )
@@ -2161,5 +2163,60 @@ class CompletionSuite extends BaseCompletionSuite {
        |}
        |""".stripMargin,
     filter = _ == "`Foo Bar`: Int"
+  )
+
+  check(
+    "insensitive-member-completion",
+    """
+      |object A {
+      | def fooBar = 1
+      |}
+      |object B {
+      |  A.foob@@
+      |}""".stripMargin,
+    """| fooBar: Int
+       |""".stripMargin,
+    compat = Map()
+  )
+
+  check(
+    "sensitive-scope-completion",
+    """
+      |object A {
+      | def fooBar = 1
+      |}
+      |object B {
+      |  import A.fooBar
+      |  fooB@@
+      |}""".stripMargin,
+    """| fooBar: Int
+       |""".stripMargin,
+    compat = Map()
+  )
+
+  check(
+    "insensitive-scope-completion",
+    """
+      |object A {
+      | def fooBar = 1
+      |}
+      |object B {
+      |  import A.fooBar
+      |  foob@@
+      |}""".stripMargin,
+    """| fooBar: Int
+       |""".stripMargin,
+    compat = Map()
+  )
+
+  check(
+    "insensitive-scope-completion-prefix",
+    """
+      |object Foo{
+      |  def foo = getc@@
+      |}""".stripMargin,
+    """| getClass(): Class[_ <: Object]
+       |""".stripMargin,
+    compat = Map()
   )
 }
